@@ -20,11 +20,12 @@ public class MainActivity extends AppCompatActivity {
         final CustomProgress progress = (CustomProgress) findViewById(R.id.customProgress);
         progress.setMaxProgress(5 * 1000);
         progress.setUpdateTimeMS(10);
+        progress.setProgress(2 * 1000);
         progress.setProgressChangeListener(new CustomProgress.OnProgressChangeListener() {
             @Override
-            public void onProgressChange(CustomProgress customProgress, int value) {
-                tvProgress.setText(String.valueOf(value / 1000) + " " +
-                        String.valueOf(value % 1000));
+            public void onProgressChange(CustomProgress customProgress, long value) {
+                tvProgress.setText(String.valueOf(value / 1000) + "." +
+                        String.valueOf((value % 1000)/ 100));
             }
         });
         startButton.setOnTouchListener(new View.OnTouchListener() {

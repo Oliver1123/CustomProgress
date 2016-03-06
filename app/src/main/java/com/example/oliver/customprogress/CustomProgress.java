@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -23,20 +24,22 @@ public class CustomProgress extends View {
     private Paint mProgressPaint;
     private Paint mPausesPaint;
 
-    private int mProgress;
+    private long mProgress;
     private int mMaxProgress = MAX_PROGRESS_DEFAULT;
     private int mProgressColor = Color.BLUE;
     private int mPauseColor = Color.WHITE;
     private int mUpdateTimeMS = UPDATE_TIME_DEFAULT_MS;
-    private List<Integer> mPauseProgressValue;
+    private List<Long> mPauseProgressValue;
     private OnProgressChangeListener mProgressChangeListener;
-
+    private long mStartTime;
     private Handler mUpdateHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == UPDATE_MESSAGE) {
-                mProgress += mUpdateTimeMS;
+                long currentTime = System.currentTimeMillis();
+                mProgress += (currentTime - mStartTime);
+                mStartTime = currentTime;
                 if (mProgress > mMaxProgress) {
                     end();
                 } else {
@@ -49,6 +52,7 @@ public class CustomProgress extends View {
             }
         }
     };
+    private float mPauseBarWidth;
 
     public CustomProgress(Context context) {
         super(context);
@@ -77,12 +81,13 @@ public class CustomProgress extends View {
         mPauseProgressValue = new ArrayList<>();
 
         mProgress = 0;
+        mPauseBarWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getContext().getResources().getDisplayMetrics());
     }
-    public int getProgress() {
+    public long getProgress() {
         return mProgress;
     }
 
-    public void setProgress(int progress) {
+    public void setProgress(long progress) {
         if (progress > mMaxProgress)
             throw new IllegalArgumentException("Progress must be < " + mMaxProgress);
         if (progress < 0)
@@ -120,6 +125,14 @@ public class CustomProgress extends View {
         mProgressPaint.setColor(mPauseColor);
     }
 
+    public float getPauseBarWidth() {
+        return mPauseBarWidth;
+    }
+
+    public void setPauseBarWidth(float pauseBarWidth) {
+        mPauseBarWidth = pauseBarWidth;
+    }
+
     public int getUpdateTimeMS() {
         return mUpdateTimeMS;
     }
@@ -148,9 +161,9 @@ public class CustomProgress extends View {
 
     private void drawPauseParts(Canvas canvas) {
         float partWidth = getWidth() / (float)mMaxProgress;
-        for (Integer pauseProgress : mPauseProgressValue) {
-            canvas.drawRect(pauseProgress * partWidth, 0,
-                    (pauseProgress + 1) * partWidth, getWidth(),
+        for (Long pauseBarProgress : mPauseProgressValue) {
+            canvas.drawRect(pauseBarProgress * partWidth, 0,
+                    (pauseBarProgress + mPauseBarWidth) * partWidth, getWidth(),
                     mPausesPaint);
         }
     }
@@ -162,6 +175,7 @@ public class CustomProgress extends View {
 
     public void start() {
         mUpdateHandler.sendEmptyMessage(UPDATE_MESSAGE);
+        mStartTime = System.currentTimeMillis();
     }
 
     public void end() {
@@ -177,6 +191,6 @@ public class CustomProgress extends View {
 
 
     public interface OnProgressChangeListener {
-        void onProgressChange(CustomProgress customProgress, int value);
+        void onProgressChange(CustomProgress customProgress, long value);
     }
 }
